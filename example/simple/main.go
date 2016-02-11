@@ -2,24 +2,28 @@ package main
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/benburkert/pubsub"
+	"myelin"
 )
 
-func main() {
-	ps, _ := pubsub.New(16, 4)
+type IntegerMessage int
 
-	subs := []string{"A", "B", "C", "D"}
-	for i := range subs {
-		id := subs[i]
-		fn := func(v interface{}) {
-			fmt.Printf("%s got %d\n", id, v)
-		}
-		ps.SubFunc(fn)
+func main() {
+	names := []string{"A", "B", "C", "D"}
+	for _, name := range names {
+		messages := make(chan IntegerMessage)
+		myelin.Subscribe(messages)
+		printFormat := name + " got %d\n"
+		go func() {
+			for {
+				fmt.Printf(printFormat, <-messages)
+			}
+		}()
 	}
 
 	for i := 0; i <= 25; i++ {
-		ps.Pub(i)
+		myelin.Publish(IntegerMessage(i))
 	}
-	ps.Close()
+	time.Sleep(time.Millisecond)
 }
